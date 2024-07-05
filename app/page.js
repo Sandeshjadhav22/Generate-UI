@@ -1,6 +1,56 @@
+"use client"
+
+import { useState } from "react";
+import parse from 'html-react-parser';
+
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [code, setCode] = useState("");
+
+
+  function removeMarkdown(text) {
+    const start = text.indexOf("```jsx");
+    const end = text.lastIndexOf("```");
+  
+    if (start !== -1 && end > start) {
+      return text.slice(start + 6, end); // Remove "`jsx" and "`"
+    }
+  
+    return text; // No code block found, return original text
+  }
+ 
+ const handleCopy = async() => {
+  try {
+    await navigator.clipboard.writeText(code)
+    alert("Code copied to clipboard")
+  } catch (error) {
+    console.log("Failed to copy",error);
+  }
+ }
+
+ const handleGenerate = async() => {
+  try {
+    const response = await fetch('/api/generate',{
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ body: prompt })
+    });
+
+  const data = await response.json()
+
+  if(response.ok){
+    setCode(removeMarkdown(data.code));
+  } else{
+    console.error(error);
+  }
+
+  } catch (error) {
+    console.log(error);
+  }
+ }
+
   return (
     <main className="flex min-h-screen flex-col items-center p-12">
       <div className="max-w-5xl w-full flex-col items-center justify-center text-sm lg:flex">
@@ -35,6 +85,7 @@ export default function Home() {
 
         <div className="bg-transparent border-2 border-gray-300 rounded mt-7 p-2 flex justify-center">
           {/* <GeneratedComponent code={code}/> */}
+          {parse(code)}
         </div>
 
         <div className="bg-transparent rounded mt-7 p-2 flex justify-center">
